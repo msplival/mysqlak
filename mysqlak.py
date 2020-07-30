@@ -4,7 +4,6 @@ import mysql.connector
 import uuid
 import time
 
-
 def do_batch(size=10):
     batch_uuid = uuid.uuid4()
 
@@ -32,5 +31,5 @@ def do_batch(size=10):
     conn.close()
     print('   Completed.')
 
-for i in range(1,2, 10):
+for i in range(1,100, 10):
     do_batch(i*100)
