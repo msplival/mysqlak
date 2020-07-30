@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mysql -u mario -h xen-mysql-percona.lxd < mysqlak.sql
