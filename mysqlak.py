@@ -2,46 +2,30 @@
 
 import mysql.connector
 import uuid
-import argparse
-
-TABLE_DEFINITION = """
-    CREATE TABLE batches (
-        batch_uuid char(36) primary key,
-        time_created timestamp
-    );
-
-    CREATE TABLE t1 (
-        id integer primary key auto_increment,
-        batch_uuid char(36) NOT NULL REFERENCES batches (batch_uuid),
-        data_value text NOT NULL,
-        time_created timestamp
-    );
-"""
 
 
+def do_batch(size=10):
+    batch_uuid = uuid.uuid4()
 
-def prepare_database():
-    print('Preparing the database...')
+    print('Starting batch {0}, size {1}'.format(batch_uuid, size))
+    print('   Connecting to database...')
     conn = mysql.connector.connect(user='mario', 
-                                   host='xen-mysql-percona.lxd')
+                                host='xen-mysql-percona.lxd',
+                                database='mysqlak')
+    conn.autocommit = False
+
     curs = conn.cursor()
-    try:
-        curs.execute('DROP DATABASE IF EXISTS mysqlak;')
-        curs.execute('CREATE DATABASE mysqlak;')
-        curs.execute('USE mysqlak;')
-        curs.execute(TABLE_DEFINITION) 
-    except Exception as e:
-        print('e:'+ str(e))
+
+    curs.execute("INSERT INTO batches (batch_uuid) VALUES ('{0}');".format(batch_uuid))
+    conn.commit()
+
+    for i in range(1,size):
+        sql = "INSERT INTO t1 (batch_uuid, data_value) VALUES ('{0}', 'data-{1}');".format(batch_uuid, i)
+        curs.execute(sql)
+        conn.commit()
 
     conn.close()
+    print('   Completed.')
 
-def run_me():
-    pass
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--init', action='store_true', dest='init', default=False)
-parsed = parser.parse_args()
-
-#if parsed.init == True or 1==1:
-if 1 == 1:
-    prepare_database()
+for i in range(1,100, 10):
+    do_batch(i*100)
